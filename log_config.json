@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "simple": {
+      "format": "%(levelname)s %(message)s"
+    },
+
+    "detail": {
+      "format": "%(name)s %(asctime)s %(levelname)s %(message)s",
+      "datefmt": "%Y-%m-%dT%H:%M:%S%z"
+    },
+
+    "jsonl": {
+      "()": "telegram_logger.formatters.JSONFormatter",
+      "fmt_keys": {
+        "level": "levelname",
+        "message": "message",
+        "timestamp": "timestamp",
+        "logger": "name",
+        "module": "module",
+        "function": "funcName",
+        "line": "lineno",
+        "thread_name": "threadName"
+      }
+    }
+  },
+  "filters": {
+    "no_errors":{
+      "()": "telegram_logger.filters.NonErrorFilter"
+    },
+    "telegram_filter": {
+      "()": "telegram_logger.filters.TelegramFilter"
+    }
+  },
+
+  "handlers": {
+    "stdout": {
+      "class": "logging.StreamHandler",
+      "level": "WARNING",
+      "formatter": "simple",
+      "stream": "ext://sys.stdout"
+    },
+
+    "general": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "INFO",
+      "formatter":"jsonl",
+      "filename": "./logs/general.jsonl",
+      "maxBytes": 1048576,
+      "backupCount": 3
+    },
+
+    "errors": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "ERROR",
+      "formatter":"jsonl",
+      "filename": "./logs/errors.jsonl",
+      "maxBytes": 1048576
+    },
+    "debug": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "formatter": "detail",
+      "filename": "./logs/debug.log",
+      "filters": ["no_errors"]
+    },
+    "queue_handler": {
+      "class": "logging.handlers.QueueHandler",
+      "handlers": [
+        "stdout",
+        "general",
+        "errors",
+        "debug",
+        "telegram"
+      ],
+      "respect_handler_level": true
+    },
+    "telegram": {
+      "()": "telegram_logger.handlers.TelegramHandler",
+      "token": "token",
+      "chat_id": "list[chat_id: str] or chat_id: str",
+      "level": "CRITICAL",
+      "formatter": "detail"
+    }
+  },
+
+  "loggers": {
+    "root": {
+      "level": "DEBUG",
+      "handlers": [
+        "queue_handler"
+      ]
+    }
+  }
+}
